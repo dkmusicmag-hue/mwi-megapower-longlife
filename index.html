@@ -99,6 +99,7 @@ body {
 .y-row {
   position: absolute; left:0; width:1520px;
   display: flex; align-items: flex-end; padding-bottom:8px;
+  z-index: 3;
 }
 /* Y positions (justify-between in h:519 pb:99 → 5 items spanning 420px with 105px gaps) */
 .y-row-0  { top:0px; }
@@ -124,6 +125,7 @@ body {
   position: absolute; left:0; top:27px; height:493px;
   object-fit:fill; object-position:left top;
   clip-path: inset(100% 0 0 0);
+  z-index: 1;
 }
 .curve-ll { width:1265px; }
 .curve-st { width:952px; }
@@ -136,6 +138,7 @@ body {
 }
 .x-col {
   flex:1 0 0; min-width:1px;
+  position: relative; z-index: 3;
   font-family:"Open Sans",sans-serif; font-weight:400;
   font-size:16px; color:#838691; letter-spacing:-0.16px; white-space:nowrap;
   opacity:0; transform:translateY(8px);
@@ -144,6 +147,7 @@ body {
   position:absolute; top:519px; left:0; width:1520px; height:1px;
   background:rgba(255,255,255,0.3);
   transform:scaleX(0); transform-origin:left center;
+  z-index: 3;
 }
 
 /* ── Tooltip dots ── */
@@ -151,6 +155,7 @@ body {
   position:absolute; width:8px; height:8px;
   transform:translate(-50%,-50%) scale(0);
   transform-origin:center;
+  z-index: 5;
 }
 .dot-white { background:#F2F6FA; }
 .dot-cyan  { background:#72CFE8; }
@@ -160,6 +165,7 @@ body {
   position:absolute; width:1px;
   transform-origin:bottom center;
   transform:scaleY(0);
+  z-index: 4;
 }
 .connector-white { background:rgba(242,246,250,0.6); }
 .connector-cyan  { background:rgba(114,207,232,0.6); }
@@ -168,6 +174,7 @@ body {
 .tooltip-card {
   position:absolute; padding:20px;
   opacity:0; transform:translateY(8px);
+  z-index: 6;
 }
 .tooltip-card p {
   font-family:"Open Sans",sans-serif; font-weight:400;
@@ -454,84 +461,67 @@ function runAnimation() {
 
     const T = "cubic-bezier(0.22,1,0.36,1)";
 
-    /* 1. Header */
+    /* ── Synchronized start: text & chart begin together ── */
+
+    /* 1. Caption + first gridline (t=200) */
     show(document.getElementById("caption"), 200, 600, 0, 0);
-    show(document.getElementById("titleH"),  500, 700);
-    show(document.getElementById("titleSub"),800, 600);
+    { const yl=document.getElementById("yl0"), gl=document.getElementById("gl0");
+      setTimeout(()=>{ yl.style.transition=`opacity 400ms ease, transform 400ms ${T}`; yl.style.opacity="1"; yl.style.transform="translateX(0)"; }, 200);
+      setTimeout(()=>{ gl.style.transition=`transform 500ms ${T}`; gl.style.transform="scaleX(1)"; }, 280); }
 
-    /* 2. Big number */
-    show(document.getElementById("bigNumber"), 900, 600);
-    countUp(
-      document.getElementById("bigNumber"),
-      175000,
-      n => {
-        const s = n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0");
-        return s + "\u00A0км";
-      },
-      1400, 900
-    );
-    setTimeout(() => {
-      const div = document.getElementById("statDivider");
-      div.style.transition = `opacity 300ms ease, transform 600ms ${T}`;
-      div.style.opacity = "1";
-      div.style.transform = "scaleX(1)";
-    }, 1200);
-    show(document.getElementById("statDesc"),  1300, 600);
-    show(document.getElementById("statLead"),  1100, 650);
-    show(document.getElementById("statBody"),  1300, 600);
-
-    /* 3. Gridlines — appear top-to-bottom, fast */
-    for(let i=0;i<5;i++) {
-      const d = 1600 + i*100;
-      const yl = document.getElementById("yl"+i);
-      const gl = document.getElementById("gl"+i);
-      setTimeout(() => {
-        yl.style.transition = `opacity 400ms ease, transform 400ms ${T}`;
-        yl.style.opacity = "1"; yl.style.transform = "translateX(0)";
-      }, d);
-      setTimeout(() => {
-        gl.style.transition = `transform 500ms ${T}`;
-        gl.style.transform = "scaleX(1)";
-      }, d + 80);
+    /* 2. Title + gridlines 1-4 (t=350-600) */
+    show(document.getElementById("titleH"), 350, 700);
+    for(let i=1;i<5;i++) {
+      const d = 350 + (i-1)*80;
+      const yl=document.getElementById("yl"+i), gl=document.getElementById("gl"+i);
+      setTimeout(()=>{ yl.style.transition=`opacity 400ms ease, transform 400ms ${T}`; yl.style.opacity="1"; yl.style.transform="translateX(0)"; }, d);
+      setTimeout(()=>{ gl.style.transition=`transform 500ms ${T}`; gl.style.transform="scaleX(1)"; }, d+80);
     }
 
-    /* 4. X-axis line */
-    setTimeout(() => {
-      const xl = document.getElementById("xLine");
-      xl.style.transition = `transform 500ms ${T}`;
-      xl.style.transform = "scaleX(1)";
-    }, 2100);
+    /* 3. Subtitle + x-axis line (t=550) */
+    show(document.getElementById("titleSub"), 550, 600);
+    setTimeout(()=>{ const xl=document.getElementById("xLine"); xl.style.transition=`transform 500ms ${T}`; xl.style.transform="scaleX(1)"; }, 550);
 
-    /* 5. X-axis labels — left to right */
+    /* 4. X-axis labels left→right (t=600) */
     for(let i=0;i<10;i++) {
-      const xc = document.getElementById("xc"+i);
-      setTimeout(() => {
-        xc.style.transition = `opacity 350ms ease, transform 350ms ${T}`;
-        xc.style.opacity="1"; xc.style.transform="translateY(0)";
-      }, 2150 + i*60);
+      const xc=document.getElementById("xc"+i);
+      setTimeout(()=>{ xc.style.transition=`opacity 300ms ease, transform 300ms ${T}`; xc.style.opacity="1"; xc.style.transform="translateY(0)"; }, 620 + i*50);
     }
 
-    /* 6. Curves — LONGLIFE first (behind), then Standard */
-    revealUp(document.getElementById("curveLl"), 1400, 2300);
-    revealUp(document.getElementById("curveSt"), 1600, 2500);
+    /* 5. Big number count-up + curves start simultaneously (t=700) */
+    show(document.getElementById("bigNumber"), 700, 600);
+    countUp(
+      document.getElementById("bigNumber"), 175000,
+      n => { const s = n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, "\u00A0"); return s + "\u00A0км"; },
+      1400, 700
+    );
+    /* Curves — LONGLIFE (cyan) behind, Standard (gray) on top, both from bottom */
+    revealUp(document.getElementById("curveLl"), 1400, 700);
+    revealUp(document.getElementById("curveSt"), 1600, 900);
 
-    /* 7. Tooltip dots pop in (left → right: d1, d3, d2, d4) */
+    /* 6. Stat divider + texts (t=900-1100) */
+    setTimeout(()=>{ const div=document.getElementById("statDivider"); div.style.transition=`opacity 300ms ease, transform 600ms ${T}`; div.style.opacity="1"; div.style.transform="scaleX(1)"; }, 950);
+    show(document.getElementById("statDesc"),  1050, 600);
+    show(document.getElementById("statLead"),   850, 650);
+    show(document.getElementById("statBody"),  1050, 600);
+
+    /* 7. Tooltip dots (t=2000, after curves finish) */
     const dotOrder = ["d1","d3","d2","d4"];
-    dotOrder.forEach((id, i) => popDot(document.getElementById(id), 3800 + i*180));
+    dotOrder.forEach((id, i) => popDot(document.getElementById(id), 2000 + i*160));
 
-    /* 8. Connector lines grow from dot upward */
+    /* 8. Connector lines */
     const lnOrder = ["ln1","ln3","ln2","ln4"];
-    lnOrder.forEach((id, i) => growLine(document.getElementById(id), 3850 + i*180));
+    lnOrder.forEach((id, i) => growLine(document.getElementById(id), 2060 + i*160));
 
-    /* 9. Tooltip cards fade in */
+    /* 9. Tooltip cards */
     const tcOrder = ["tc1","tc3","tc2","tc4"];
-    tcOrder.forEach((id, i) => show(document.getElementById(id), 3950 + i*180, 500));
+    tcOrder.forEach((id, i) => show(document.getElementById(id), 2150 + i*160, 450));
 
     /* 10. Disclaimer */
-    show(document.getElementById("disclaimer"), 4600, 600);
+    show(document.getElementById("disclaimer"), 2800, 600);
 
     /* 11. Replay button */
-    setTimeout(() => document.getElementById("replayBtn").classList.add("visible"), 5200);
+    setTimeout(() => document.getElementById("replayBtn").classList.add("visible"), 3400);
   }));
 }
 
