@@ -123,6 +123,7 @@ body {
 /* ── Curve images ── */
 .curve {
   position: absolute; left:0; top:27px;
+  clip-path: inset(100% 0 0 0);
   overflow: visible;
   z-index: 1;
 }
@@ -251,15 +252,12 @@ body {
           <stop stop-color="#72CFE8"/>
           <stop offset="1" stop-color="#72CFE8" stop-opacity="0"/>
         </linearGradient>
-        <linearGradient id="gradLlLine" x1="1247.97" y1="459.279" x2="1346.27" y2="520.002" gradientUnits="userSpaceOnUse">
-          <stop stop-color="#72CFE8"/>
+        <linearGradient id="gradLlLine" x1="0" y1="0" x2="1265" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0.85" stop-color="#72CFE8"/>
           <stop offset="1" stop-color="#72CFE8" stop-opacity="0"/>
         </linearGradient>
-        <clipPath id="clipLlFill">
-          <rect id="clipRectLl" x="0" y="492" width="1265" height="0"/>
-        </clipPath>
       </defs>
-      <path d="M188.91 80.5L0 0V492H1264L1006.92 449L789.627 391L533.91 296L377.454 200.5L188.91 80.5Z" fill="url(#gradLlFill)" clip-path="url(#clipLlFill)"/>
+      <path d="M188.91 80.5L0 0V492H1264L1006.92 449L789.627 391L533.91 296L377.454 200.5L188.91 80.5Z" fill="url(#gradLlFill)"/>
       <path id="lineLl" d="M0.195819 0.460066L189.279 80.9677L377.94 200.979L534.598 296.488L790.523 391.497L1008.01 449.503L1265.32 492.507" stroke="url(#gradLlLine)" stroke-width="1.5" fill="none" stroke-dasharray="1380" stroke-dashoffset="1380"/>
     </svg>
     <!-- Standard white fill + stroke (in front) -->
@@ -269,15 +267,12 @@ body {
           <stop stop-color="white"/>
           <stop offset="1" stop-color="white" stop-opacity="0"/>
         </linearGradient>
-        <linearGradient id="gradStLine" x1="983.991" y1="449.035" x2="1005.29" y2="516.451" gradientUnits="userSpaceOnUse">
-          <stop stop-color="white"/>
+        <linearGradient id="gradStLine" x1="0" y1="0" x2="952" y2="0" gradientUnits="userSpaceOnUse">
+          <stop offset="0.85" stop-color="white"/>
           <stop offset="1" stop-color="white" stop-opacity="0"/>
         </linearGradient>
-        <clipPath id="clipStFill">
-          <rect id="clipRectSt" x="0" y="492" width="952" height="0"/>
-        </clipPath>
       </defs>
-      <path d="M141 80.5L0 0V492H951.5L801 453.5L643.5 394L449.5 312.5L322 224.5L225 141L141 80.5Z" fill="url(#gradStFill)" clip-path="url(#clipStFill)"/>
+      <path d="M141 80.5L0 0V492H951.5L801 453.5L643.5 394L449.5 312.5L322 224.5L225 141L141 80.5Z" fill="url(#gradStFill)"/>
       <path id="lineSt" d="M0.247844 0.434276L141.271 80.9477L225.285 141.458L322.301 224.972L449.823 312.986L643.855 394.5L801.381 454.01L949.406 492.516" stroke="url(#gradStLine)" stroke-width="1.5" fill="none" stroke-dasharray="1100" stroke-dashoffset="1100"/>
     </svg>
 
@@ -450,10 +445,10 @@ function reset() {
   const bn = document.getElementById("bigNumber");
   if(bn){ bn.style.opacity="0"; bn.style.transform="translateY(20px)"; bn.textContent="0 км"; }
   // Curves (SVG)
-  const clipRectLl = document.getElementById('clipRectLl');
-  const clipRectSt = document.getElementById('clipRectSt');
-  if(clipRectLl){ clipRectLl.setAttribute('y','492'); clipRectLl.setAttribute('height','0'); }
-  if(clipRectSt){ clipRectSt.setAttribute('y','492'); clipRectSt.setAttribute('height','0'); }
+  ['curveLl','curveSt'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el){ el.style.transition='none'; el.style.clipPath='inset(100% 0 0 0)'; }
+  });
   const lineLlR = document.getElementById('lineLl');
   const lineStR = document.getElementById('lineSt');
   if(lineLlR) lineLlR.style.strokeDashoffset = '1380';
@@ -493,31 +488,28 @@ function reset() {
 
 /* ── Main animation ── */
 
-/* ── Curve animation: fill grows bottom-to-top, stroke draws left-to-right ── */
+/* ── Curve animation: fill + stroke both grow from bottom ── */
 function animateCurves(dur, delay) {
-  const clipRectLl = document.getElementById('clipRectLl');
-  const clipRectSt = document.getElementById('clipRectSt');
-  const lineLl     = document.getElementById('lineLl');
-  const lineSt     = document.getElementById('lineSt');
+  const svgLl  = document.getElementById('curveLl');
+  const svgSt  = document.getElementById('curveSt');
+  const lineLl = document.getElementById('lineLl');
+  const lineSt = document.getElementById('lineSt');
   setTimeout(() => {
     const t0 = performance.now();
     function tick(now) {
-      const p  = Math.min((now - t0) / dur, 1);
-      const e  = easeOut3(p);
-      // fill reveal (bottom → top)
-      const hLl = e * 492;
-      clipRectLl.setAttribute('y',      492 - hLl);
-      clipRectLl.setAttribute('height', hLl);
-      const hSt = e * 492;
-      clipRectSt.setAttribute('y',      492 - hSt);
-      clipRectSt.setAttribute('height', hSt);
-      // stroke draw (left → right)
+      const p = Math.min((now - t0) / dur, 1);
+      const e = easeOut3(p);
+      // fill + stroke reveal via CSS clip-path (bottom → top)
+      const pct = (1 - e) * 100;
+      svgLl.style.clipPath = `inset(${pct}% 0 0 0)`;
+      svgSt.style.clipPath = `inset(${pct}% 0 0 0)`;
+      // also draw stroke left → right via dashoffset
       lineLl.style.strokeDashoffset = 1380 * (1 - e);
       lineSt.style.strokeDashoffset = 1100 * (1 - e);
       if (p < 1) requestAnimationFrame(tick);
       else {
-        clipRectLl.setAttribute('y','0'); clipRectLl.setAttribute('height','492');
-        clipRectSt.setAttribute('y','0'); clipRectSt.setAttribute('height','492');
+        svgLl.style.clipPath = 'inset(0 0 0 0)';
+        svgSt.style.clipPath = 'inset(0 0 0 0)';
         lineLl.style.strokeDashoffset = '0';
         lineSt.style.strokeDashoffset = '0';
       }
